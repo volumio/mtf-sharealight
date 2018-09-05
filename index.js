@@ -9,7 +9,7 @@ const io = require('socket.io')(4111);
 
 
 //VARIABLES
-const paletteSize = 12;
+const paletteSize = 36;
 var colorPalette = new Array(paletteSize);
 var clients = 0;
 var colorPalettePosition = paletteSize/2;
@@ -47,13 +47,8 @@ function readFromPowerMate(){
     console.log('Listening on power mate events'.green);
 
     powermate.on('buttonDown', function() {
-        //console.log('button')
-        colorPalettePosition = colorPalettePosition + 1;
-        if (colorPalettePosition > paletteSize) {
-            colorPalettePosition = 0;
-        }
-        console.log(colorPalette[colorPalettePosition])
-        io.emit('color',  colorPalette[colorPalettePosition]);
+        console.log('button')
+        sendColor('#000000')
     });
 
     powermate.on('wheelTurn', function(delta) {
@@ -70,8 +65,9 @@ function readFromPowerMate(){
             }
         }
 
-        console.log(colorPalette[colorPalettePosition])
-        io.emit('color',  colorPalette[colorPalettePosition]);
+        //console.log(colorPalette[colorPalettePosition])
+        sendColor(colorPalette[colorPalettePosition])
+        //io.emit('color',  colorPalette[colorPalettePosition]);
     });
 }
 
@@ -91,6 +87,35 @@ function createPalette() {
 
         return hex.length === 1 ? "0"+hex : hex;
     }
-
     //console.log(colorPalette)
+}
+
+function hexToRgb(hex) {
+    try {
+        var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+        hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+            return r + r + g + g + b + b;
+        });
+
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    } catch(e) {
+        console.log('ERR!')
+    }
+
+}
+
+function sendColor(color) {
+    var hex = hexToRgb(color);
+    try {
+        var hexMessage = 'rgb(' + hex.r +', ' + hex.g +', ' + hex.b +')';
+        io.emit('color',  hexMessage);
+    } catch(e) {
+        console.log('ERR!')
+    }
+
 }
